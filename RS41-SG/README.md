@@ -3,7 +3,7 @@ The RS41-SG is for the most part sending exactly the same data as the RS41-SGP, 
 
 ## Differences to RS41-SGP
 
-There is only one major difference: the three measurement values for the pressure in the 7A-MEAS block are all empty and filled with 0s.
+There is only one major difference: the three measurement values for the pressure in the 7A-MEAS block are all empty and filled with zeros.
 
 ## Subframe
 
