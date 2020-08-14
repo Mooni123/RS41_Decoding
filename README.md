@@ -1,5 +1,5 @@
 # RS41 Decoding
-This repositories purpose is to explain how the radiosonde Vaisala RS41 transmitts it's data to the ground station, how third parties can obtain the data as well as decode and interpret it.
+The main purpose of this repository is to explain how the radiosonde Vaisala RS41 transmits it's data to the ground station and how third parties can obtain the data as well as decode and interpret it.
 
 For general information about radiosondes check out [Wikipedia](https://en.wikipedia.org/wiki/Radiosonde).
 
@@ -19,7 +19,7 @@ Corrections and additions are always welcome, just fork the repo, edit according
 
 My findings are really nothing new, at the end this repo is, for the most part, just an extended documentation of [Zilog80s decoder](https://github.com/rs1729/RS), to whom most of the kudos belong.
 
-First I will explain a little how FSK Modulation works an how we can obtain the raw bytes sent. Then I will talk about the general Frame structure. Detailed explanations on the different RS41 models can be found in the appropiate files/folders.
+First I will explain a little how FSK Modulation works and how we can obtain the raw bytes sent. Then I will talk about the general Frame structure. Detailed explanations on the different RS41 models can be found in the appropiate files/folders.
 
 There is no actual decoder in this repo, just the knowledge on how to build one.  However, I would like to add a simple PoC-style decoder, most likely as a C++ WPF application, at some point.
 
@@ -31,7 +31,7 @@ There is no actual decoder in this repo, just the knowledge on how to build one.
 ## How to obtain (G)FSK Data in general
 For a more detailed explanation, refer to [Wikipedia](https://en.wikipedia.org/wiki/Frequency-shift_keying).
 
-At it's core, FSK (Frequency Shift Keying) just is binary FM-Modulation. With FM-Modulation, an analog signal (usually audio) is transmitted by varying the carriers frequency accordingly. Note that not the actual frequency of the carrier at any given moment encodes the frequency of the signal, but rather the gradual change of frequency over time. The actual frequency of the carrier is a way of transmitting the amplitude of the signal. The frequency of the signal is determined by how often the it's amplitude changes polarity, and this is why the speed at which the carrier's frequency changes represents the frequency of the signal. The actual frequency deviation of the carrier is specific for each transmission standard and has to be selected (to some degree) in accordance to the signals bandwith. This is also what differentiates Narrow-Band-FM (NFM) from Wide-Band-FM (FM) and why you have to set your receiver to NFM to be able to decode radiosondes.
+At it's core, FSK (Frequency Shift Keying) is just a binary FM-Modulation. With FM-Modulation, an analog signal (usually audio) is transmitted by varying the carriers frequency accordingly. Note that not the actual frequency of the carrier at any given moment encodes the frequency of the signal, but rather the gradual change of frequency over time. The actual frequency of the carrier is a way of transmitting the amplitude of the signal. The frequency of the signal is determined by how often it's amplitude changes polarity, and this is why the speed at which the carrier's frequency changes represents the frequency of the signal. The actual frequency deviation of the carrier is specific for each transmission standard and has to be selected (to some degree) in accordance to the signals bandwith. This is also what differentiates Narrow-Band-FM (NFM) from Wide-Band-FM (FM) and why you have to set your receiver to NFM to be able to decode radiosondes.
 
 So what is FSK exactly? FSK is a way of sending data, in which every symbol is transmitted by sending out a certain frequency representing that symbol. Through switching between the different frequencies (keying them) a data stream can be sent. In it's most simple form, FSK-2 (or just FSK) there are just two frequencies and thus symbols. In this case, every symbol encodes a single bit. FSK-4 uses 4 symbols, each representing two bits. Increasing the symbol count increases the channel capacity, but comes at a cost, which is not to be discussed here. The RS41 just uses regular ol' FSK, so we don't need to worry about this theoretical communication engineering stuff.
 
@@ -49,7 +49,7 @@ This defines the first steps we have to perform with our audio signal.
 
    1\. Check for every sign change in the received audio file and interpret it as a byte change.
 
-   3\. Check whether the signal might be inverted due to the reveiver and correct if neccessary.
+   3\. Check whether the signal might be inverted due to the receiver and correct it if neccessary.
 
 ## What did we actually obtain here?
 
@@ -65,7 +65,7 @@ If we interpret the preamble as binary data however, it consists of 320 bits and
 
 (* unless it is an extended frame)
 
-If we than take a look at the bytes that are sent after the preamble, we can find that those are the same for every sonde. This is the header consisting of 8 bytes. If you would read it as it is displayed when taking a look at the waverform, it would read as 0b0000100001101101010100111000100001000100011010010100100000011111, but how do we have to read this? This bitstream is little endian encoded, both bytewise and bitwise. That means the first nibble 0b0000 translates to 0x0, the second 0b1000 to 0x1. The first byte than reads as 0x10. The whole Header than can be decoded as 0x10B6CA11229612F8.
+If we than take a look at the bytes that are sent after the preamble, we can find that those are the same for every sonde. This is the header consisting of 8 bytes. If you would read it as it is displayed when taking a look at the waveform, it would read as 0b0000100001101101010100111000100001000100011010010100100000011111, but how do we have to read this? This bitstream is little endian encoded, both bytewise and bitwise. That means the first nibble 0b0000 translates to 0x0, the second 0b1000 to 0x1. The first byte than reads as 0x10. The whole Header than can be decoded as 0x10B6CA11229612F8.
 
 ![sonde_data_with_annotations](__used_asset__/pic_sonde_data_with_annotations.png?raw=true "sonde_data_with_annotations")
 
@@ -85,7 +85,7 @@ The whole XOR-mask is as follows:
 
 So here are steps two and four in our decoding chain.
 
-   2\. Check for sign changes that correspond to the bitate of the sonde and find out whether the recieved data matches the known preamble or header. If that is the case, get the raw data for the rest of the frame and start processing it.
+   2\. Check for sign changes that correspond to the bitrate of the sonde and find out whether the received data matches the known preamble or header. If that is the case, get the raw data for the rest of the frame and start processing it.
 
    4\. Transpose the bitwise little-endian to a bitwise big-endian.
 
@@ -93,18 +93,18 @@ So here are steps two and four in our decoding chain.
 
 ## RS41 Frame Format
 
-If you did all of the above, you will end up with a frame which will look somewhat like this (except you had a sonde which transmitts an exteded frame, for example an ozone sonde)
+If you did all of the above, you will end up with a frame which will look somewhat like this (except you had a sonde which transmitts an extended frame, for example an ozone sonde)
 
 ![frame_format_rs41-sgp](__used_asset__/pic_frame_format_rs41-sgp.png?raw=true "frame_format_rs41-sgp")
 
 The general structure of each frame is as follows.
 
-Bytes [0x000-0x007] contain 8 bytes header, which is always the same.
+Bytes [0x000-0x007] contains the 8 bytes header, which is always the same.
 
 After that follow 48 bytes of reed-solomon error correction data at [0x008-0x037], which can be used to identify and correct transmission errors.
 
 Byte [0x038] encodes the frame type and is 0x0F for a regular, and 0xF0 for an extended frame.
 
-And after this there is a varying number of blocks, which share a common structure. A block consist of 2 bytes head, its data, and two byters tail. The first byte of the head is the block id which is unique for each type of block. The second byte is the length of the block, without head and tail. The tail finally is the CRC-16 over the data part of the block.
+And after this, there is a varying number of blocks, which share a common structure. A block consist of 2 bytes header, its data, and two byte as tail. The first byte of the head is the block id which is unique for each type of block. The second byte is the length of the block, without head and tail. The tail finally is the CRC-16 over the data part of the block.
 
 Now, please go to the right file/folder for your type of sonde and continue reading there. You should also keep in mind that the data is still bytewise little-endian encoded.
