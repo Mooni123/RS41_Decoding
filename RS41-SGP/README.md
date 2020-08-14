@@ -35,7 +35,7 @@ Also there is the Subframe, who is transmitted over 51 frames in pieces of 16 by
 ## 7A-MEAS
 The 7A-MEAS block contains all the infomation about the PTU measurements.
 
-There are two temperature sensors in the sonde, on for the actual temperature and one on the heated humidity sensor. Those are PT1000. Additionally, there are cpacitive sensors for humidity and pressure. For each type of measurement, there are additional references.
+There are two temperature sensors in the sonde, on for the actual temperature and one on the heated humidity sensor. Those are PT1000. Additionally, there are capacitive sensors for humidity and pressure. For each type of measurement, there are additional references.
 
 What those values actually mean is still unclear, there are a few different formulas for calculating the temperature who are all a bit different. I hope to provide some more information about this at some point. In the meantime, check out [zilog80s](https://github.com/rs1729/RS/tree/master/rs41) code.
 
@@ -60,7 +60,7 @@ For the hardware side of things, which is also of interest here, take a look at 
 | `[0x28]` |  | `0x0000` |  | static 0x00 -purpose unknown |
 
 ## 7C-GPSINFO
-The 7C-GPSINFO block contains GPS status information. It includes the GPS Week and Time of week as well as having twelve slots for SVNs (Space Vehicle Numbers, though whats transmitted are actually PRN#) with the according signal quality. What indication is used there is unknown. the [RS41 Tracker](http://escursioni.altervista.org/Radiosonde/) plots this value on a scale from 0 to 43, the corresponding values in the RS41 Tracker are in an additional column.
+The 7C-GPSINFO block contains GPS status information. It includes the GPS Week and Time of Week as well as having twelve slots for SVNs (Space Vehicle Numbers, though whats transmitted are actually PRN#) with the according signal quality. What indication is used there is unknown. the [RS41 Tracker](http://escursioni.altervista.org/Radiosonde/) plots this value on a scale from 0 to 43, the corresponding values in the RS41 Tracker are in an additional column.
 
 If there are less than 12 satellites tracked, the other slots are 0x00.
 
@@ -193,14 +193,16 @@ Frequency is calculated by the formula `freq = 400 MHz + (freq upper + (freq low
 | `[0x059]` | float32 | 1.279928 | calibration temperature tempmeas calT1[0] |
 | `[0x05D]` | float32 | -0.063965678 | calibration temperature tempmeas calT1[1] |
 | `[0x061]` | float32 | 0.0038336662 | calibration temperature tempmeas calT1[2] |
+| `[0x075]` | float32 | 45.3702965 | calibration humidity calH[0] |
+| `[0x079]` | float32 | 5.017158 | calibration humidity calH[1] |
 | `[0x125]` | float32 | -243.9108 | constants temperature humimeas co2[0] |
 | `[0x129]` | float32 | 0.187654 | constants temperature humimeas co2[1] |
 | `[0x12D]` | float32 | 8.2e-06 | constants temperature humimeas co2[2] |
-| `[0x131]` | float32 | 1.3234462 | calibration temperature humimeas calT1[0] |
-| `[0x135]` | float32 | -0.01772682 | calibration temperature humimeas calT1[1] |
-| `[0x139]` | float32 | 0.0073917112 | calibration temperature humimeas calT1[2] |
+| `[0x131]` | float32 | 1.3234462 | calibration temperature humimeas calT2[0] |
+| `[0x135]` | float32 | -0.01772682 | calibration temperature humimeas calT2[1] |
+| `[0x139]` | float32 | 0.0073917112 | calibration temperature humimeas calT2[2] |
 | `[0x218]` | char[10] | "RS41-SGP  " | sonde type |
 | `[0x222]` | char[10] | "RSM421    " | mainboard type |
 | `[0x22C]` | char[10] | "P2510419 " | mainboard serial |
-| `[0x243]` | char[10] | "P2670962  " | pressure  serial |
+| `[0x243]` | char[10] | "P2670962  " | pressure serial |
 | `[0x316]` | uint16 | 30600 s | burstkill timer |
