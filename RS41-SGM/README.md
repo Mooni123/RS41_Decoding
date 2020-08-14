@@ -1,7 +1,7 @@
 # RS41-SGM
-The RS41-SGM is the military version of the RS41, which has no pressure sensor, but hardwarewise has an additional EEPROM. It has to main differences compared to an normal RS41:
-1. The GPS and PTU data is encrypted
-2. It features a radio silence mode, in which the transmitter is activated only at a certain altitude or after a certain time. The ascend data up to this point is stored in the EEPROM an then sent interleaved with the regular data. As far as I know, this mode was not activated when obtaining the following frame. Maybe extended frames, such as for xdata soundings, are used in this mode.
+The RS41-SGM is the military version of the RS41, which has no pressure sensor, but hardwarewise has an additional EEPROM. It has two main differences compared to an normal RS41:
+1. The GPS and PTU data are encrypted
+2. It features a radio silence mode, in which the transmitter is activated only at a certain altitude or after a certain time. The ascend data up to this point are stored in the EEPROM and then sent interleaved with the regular data. As far as I know, this mode was not activated when obtaining the following frame. Maybe extended frames, such as for xdata soundings, are used in this mode.
 
 A Frame of a RS41-SGM looks like the following
 
@@ -12,10 +12,10 @@ There are three different blocks inside this frame:
 2. [80-ENCRYPT](#80-ENCRYPT)
 3. [76-EMPTY](#76-EMPTY)
 
-Also there an examination of the [subframe](#Subframe).
+Also there is an examination of the [subframe](#Subframe).
 
 ## 79-STATUS
-The 79-STATUS is fot hte most part identical to a regular RS41. At Position `[0x0D]` there might be a small difference.
+The 79-STATUS is for the most part identical to a regular RS41. At Position `[0x0D]` there might be a small difference.
 
 The subframe only consist of one part, which is the Subframe #51. It is discussed [further down](#subframe).
 
@@ -40,13 +40,13 @@ The encrypted data consist (without head and tail) of 167 bytes. Maybe this odd 
 The 76-EMPTY block just contains a variable amount of zeros to fill up some space.
 
 ## Subframe
-The subframe just consists of Subframe# 51. The subframe data looks in fact quite similar to a regular subframe #51 but has some differences, and also changing bytes. However, the bytes of a regular subframe #51 change a bit during operation, too. One thing to keep in mind is that hte regular subframe #51 is transmitted 51x less frequently.
+The subframe just consists of Subframe# 51. The subframe data looks in fact quite similar to a regular subframe #51 but has some differences, and also changing bytes. However, the bytes of a regular subframe #51 change a bit during operation, too. One thing to keep in mind is that the regular subframe #51 is transmitted 51x less frequently.
 
 ```
 static over sample of 41 bytes, two exceptions
 
 0xFFFF63ED60020700F6F6C4011A650000
-                       ^    ?^ incerements every 15 frames
+                       ^    ?^ increments every 15 frames
                        |    1 or 2 nibble?
                        decrements slowly with period > 41/2 Frames
 
