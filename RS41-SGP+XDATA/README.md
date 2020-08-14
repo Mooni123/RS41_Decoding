@@ -2,7 +2,7 @@
 The XDATA Frame format is used when additional sensors, such as OIF411 Ozone Interface Board, are attached to the sonde.
 An extended length frame format with a length of 518 Bytes is used in this case. The main frame structure stays the same, just an additional 7E-XDATA block is present. The extended length frame is indicated by the [0x038]-FRAMETYPE byte beeing `0xF0` instead of `0x0F`
 
-A Frame of a RS41-SGP looks like the following
+A Frame of a RS41-SGP looks like in the following picture
 
 ![rs41-sgp_frame](__used_asset__/pic_rs41-sgp_frame.png?raw=true "rs41-sgp_frame")
 
@@ -13,7 +13,7 @@ There is also a quick introduction to [XDATA](#XDATA) and the [OIF411 message fo
 ## XDATA
 XDATA is a standardized way of connecting external instruments to radiosondes and is supported by many manufactures. It was originally developed by Jim Wendell (bobasaurus) at [NOAA](https://www.esrl.noaa.gov/gmd/ozwv/wvap/sw.html).
 
-Data is sent to the sonde via UART (3.3 V/9.6 kBaud). Multiple instruments can be daisychained, with the first instrument in the chain appending the messages of the following instruments at it's message and so on. The maximum message length for the whole chain is not standardized and depenps on the type of radiosonde used. As you can see, there's quite some space in the RS41 extended frame.
+Data is sent to the sonde via UART (3.3 V/9.6 kBaud). Multiple instruments can be daisychained, with the first instrument in the chain appending the messages of the following instruments at it's message and so on. The maximum message length for the whole chain is not standardized and depends on the type of radiosonde used. As you can see, there's quite some space in the RS41 extended frame.
 
 A XDATA message has the form `"xdata=IDNODATA"` with `"xdata="` being the header, `"ID"` beeing the unique instrument ID assigned by NOAA, `"NO"` the position of the instrument in the chain and `"DATA"` the payload data. `"ID"`, `"NO"` and `"DATA"` only shall be ASCII characters 0-9,A-F (ASCII encoded Hex).
 
