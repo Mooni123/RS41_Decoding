@@ -1,7 +1,7 @@
 # RS41-SGP
-The RS41-SGP is the sonde most often used in germany, and as it's frame has very much the same structure as the one of the -SG, the main examination shall be conducted only here.
+The RS41-SGP is the type which is most often used in Germany, and as it's frame has very much the same structure as the one of the -SG, the main examination shall be conducted only here.
 
-A Frame of a RS41-SGP looks like the following
+A frame of a RS41-SGP looks like in the following picture
 
 ![rs41-sgp_frame](__used_asset__/pic_rs41-sgp_frame.png?raw=true "rs41-sgp_frame")
 
@@ -35,9 +35,9 @@ Also there is the Subframe, who is transmitted over 51 frames in pieces of 16 by
 ## 7A-MEAS
 The 7A-MEAS block contains all the infomation about the PTU measurements.
 
-There are two temperature sensors in the sonde, on for the actual temperature and one on the heated humidity sensor. Those are PT1000. Additionally, there are capacitive sensors for humidity and pressure. For each type of measurement, there are additional references.
+There are two temperature sensors in the sonde, one for the actual temperature and one on the heated humidity sensor. Both are from type PT1000. Additionally, there are capacitive sensors for humidity and pressure. For each type of measurement, there are additional references.
 
-What those values actually mean is still unclear, there are a few different formulas for calculating the temperature who are all a bit different. I hope to provide some more information about this at some point. In the meantime, check out [zilog80s](https://github.com/rs1729/RS/tree/master/rs41) code.
+What those values actually means is still unclear, there are a few different formulas for calculating the temperature who are all a bit different. I hope to provide some more information about this at some point. In the meantime, check out [zilog80s](https://github.com/rs1729/RS/tree/master/rs41) code.
 
 For the hardware side of things, which is also of interest here, take a look at [my other repo](https://github.com/bazjo/RS41_ReverseEngineering) about the RS41s hardware.
 
@@ -60,7 +60,7 @@ For the hardware side of things, which is also of interest here, take a look at 
 | `[0x28]` |  | `0x0000` |  | static 0x00 -purpose unknown |
 
 ## 7C-GPSINFO
-The 7C-GPSINFO block contains GPS status information. It includes the GPS Week and Time of Week as well as having twelve slots for SVNs (Space Vehicle Numbers, though whats transmitted are actually PRN#) with the according signal quality. What indication is used there is unknown. the [RS41 Tracker](http://escursioni.altervista.org/Radiosonde/) plots this value on a scale from 0 to 43, the corresponding values in the RS41 Tracker are in an additional column.
+The 7C-GPSINFO block contains GPS status information. It includes the GPS Week and Time of Week as well as having twelve slots for SVNs (Space Vehicle Numbers, through whats transmitted are actually PRN#) with the according signal quality. What indication is used there is unknown. The [RS41 Tracker](http://escursioni.altervista.org/Radiosonde/) plots this value on a scale from 0 to 43, the corresponding values in the RS41 Tracker are in an additional column.
 
 If there are less than 12 satellites tracked, the other slots are 0x00.
 
@@ -104,7 +104,7 @@ If there are less than 12 satellites tracked, the other slots are 0x00.
 | --- | --- | --- | --- |
 | `[0x00]` | uint32 | `0x25FC3501` | minPRmes |
 | `[0x04]` |  | `0xFF` | static 0xFF -purpose unknown |
-| `[0x05]` | uint32 | `0x3DFDD302` | PR1: prMes = PR/100-minPRmes |
+| `[0x05]` | uint32 | `0x3DFDD302` | PR1: prMes = PR/100+minPRmes |
 | `[0x09]` | uint24 | `0x42BF00` | DP1: doMes = -DP/100\*L1/c (int24) |
 | `[0x0C]` | uint32 | `0xC68F520B` | PR2 |
 | `[0x10]` | uint24 | `0x81FEFF` | DP2 |
