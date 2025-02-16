@@ -23,12 +23,16 @@ Also there is the Subframe, who is transmitted over 51 frames in pieces of 16 by
 | address  | datatype | example data | decoded | function |
 | --- | --- | --- | --- | --- |
 | `[0x00]` | uint16 | `0x031E` | 7683 | Frame# |
-| `[0x02]` | char[8] | `0x5032373430333837` | P2740387 | Serial |
-| `[0x0A]` | uint24 | `0x1A0000` | 2.6 V | battery voltage * 10 |
-| `[0x0D]` | uint24? | `0x030000` | 3 | mostly static value -purpose unknown |
-| `[0x10]` | uint24? | `0x150000` |  |changes between 0x13 and 0x16 -purpose unknown  |
-| `[0x13]` |  | `0x5D` |  | increases and decreases very slowly -purpose unknown |
-| `[0x14]` |  | `0x000732` |  | static value -purpose unknown |
+| `[0x02]` | char[8] | `0x50 0x32 0x37 0x34 0x30 0x33 0x38 0x37` | P2740387 | Serial |
+| `[0x0A]` | uint8 | `0x1A` | 2.6 V | battery voltage * 10 |
+| `[0x0B]` | uint16 | `0x0000` | | Bit field. Purpose unknown |
+| `[0x0D]` | uint16 | `0x0003` | In flight mode, descending | Bit field.<br>**Bit 0**:  0=start phase, 1=flight mode<br>**Bit 1**: 0=ascent, 1=descent<br>**Bit 12**: 0=VBAT ok, 1=VBAT too low<br>Other bits t.b.d. |
+| `[0x0F]` | uint8 | `0x00` | Standard sonde | Crypto Mode.<br>**0**=Standard RS41-SG(P)<br>**1,2**=RS41-SGM unencrypted, sends all three GPS blocks (`7B-GPSPOS`, `7C-GPSINFO`, `7D-GPSRAW`), `7F-MEASSHORT` replaces `7A-MEAS`<br>**3,4**=RS41-SGM encrypted, encrypted block `80-CRYPTO` replaces `7F-MEASSHORT`, `7B-GPSPOS`, `7C-GPSINFO` and `7D-GPSRAW`<br>**6**=unknown, appears to indicate broken configuration |
+| `[0x10]` | uint8 | `0x15` | 21°C | Temperature of reference area (cut-out) on PCB |
+| `[0x11]` | uint16 | `0x0000` |  | Bit field (error flags).<br>t.b.d. |
+| `[0x13]` | uint16 | `0x005D` | 93 | PWM (0...1000) of humidity sensor heating |
+| `[0x15]` | uint8 | `0x07` | Max power | Transmit power setting. 0=min, 7=max) |
+| `[0x16]` | uint8 | `0x32` | 50 | Highest possible subframe# |
 | `[0x17]` | uint8 | `0x20` | 32/51 | Subframe# |
 | `[0x18]` | uint8[16] | `0xC966B54100004040FFFFFFC6FFFFFFC6` |  | Subframe |
 
@@ -56,8 +60,25 @@ For the hardware side of things, which is also of interest here, take a look at 
 | `[0x1E]` | uint24 | `0xEEA604` | 304878 | Pressure Ref1 |
 | `[0x21]` | uint24 | `0xFEAE06` | 438014 | Pressure Ref2 |
 | `[0x24]` |  | `0x0000` |  | static 0x00 -purpose unknown |
-| `[0x26]` | uint16? | `0xFBFB` |  | some kind of counter which increments around every 4 frames -purpose unknown |
+| `[0x26]` | int16 | `0xFBFB` | 0xFBFB = -1029<br>-10.29°C | Temperature of pressure sensor module (1/100 °C) |
 | `[0x28]` |  | `0x0000` |  | static 0x00 -purpose unknown |
+
+## 7F-MEASSHORT
+The 7F-MEAS block contains all the infomation about the PTU measurements, but without the option for a pressure sensor. This block is used by RS41-SGM.
+
+See description of `7A-MEAS` for details.
+
+| address  | datatype | example data | decoded | function |
+| --- | --- | --- | --- | --- |
+| `[0x00]` | uint24 | `0xCF5202` | 152271 | Temperature Tempmeas Main |
+| `[0x03]` | uint24 | `0x2A0002` | 131114 | Temperature Tempmeas Ref1 |
+| `[0x06]` | uint24 | `0x9CE702` | 190364 | Temperature Tempmeas Ref2 |
+| `[0x09]` | uint24 | `0x278D08` | 560423 | Humidity Main |
+| `[0x0C]` | uint24 | `0xAF8707` | 493487 | Humidity Ref1 |
+| `[0x0F]` | uint24 | `0x479108` | 561479 | Humidity Ref2 |
+| `[0x12]` | uint24 | `0xCB2B02` | 142283 | Temperature Humimeas Main |
+| `[0x15]` | uint24 | `0x2B0002` | 131115 | Temperature Humimeas Ref1 |
+| `[0x18]` | uint24 | `0x9DE702` | 190365 | Temperature Humimeas Ref2 |
 
 ## 7C-GPSINFO
 The 7C-GPSINFO block contains GPS status information. It includes the GPS Week and Time of Week as well as having twelve slots for SVNs (Space Vehicle Numbers, through whats transmitted are actually PRN#) with the according signal quality. What indication is used there is unknown. The [RS41 Tracker](http://escursioni.altervista.org/Radiosonde/) plots this value on a scale from 0 to 43, the corresponding values in the RS41 Tracker are in an additional column.
@@ -68,30 +89,30 @@ If there are less than 12 satellites tracked, the other slots are 0x00.
 | --- | --- | --- | --- | --- | --- |
 | `[0x00]` | uint16 | `0xE607` | 2022 |  | GPS Week |
 | `[0x02]` | uint32 | `0x18FB2512` | 304479000 ms |  | GPS Time of Week |
-| `[0x06]` | uint8 | `0x01` | 1 |  | Space Vehicle Number Slot 1 |
-| `[0x07]` | uint8 | `0xFB` | 251 | 42 | Quality Indicator Slot 1 |
-| `[0x08]` | uint8 | `0x11` | 17 |  | Space Vehicle Number Slot 2 |
-| `[0x09]` | uint8 | `0xF9` | 249 | 41 | Quality Indicator Slot 2 |
-| `[0x0A]` | uint8 | `0x13` | 19 |  | Space Vehicle Number Slot 3 |
-| `[0x0B]` | uint8 | `0xF3` | 243 | 39 | Quality Indicator Slot 3 |
-| `[0x0C]` | uint8 | `0x0B` | 11 |  | Space Vehicle Number Slot 4 |
-| `[0x0D]` | uint8 | `0xFA` | 250 | 42 | Quality Indicator Slot 4 |
-| `[0x0E]` | uint8 | `0x09` | 9 |  | Space Vehicle Number Slot 5 |
-| `[0x0F]` | uint8 | `0x92` | 146 | 6 | Quality Indicator Slot 5 |
-| `[0x10]` | uint8 | `0x16` | 22 |  | Space Vehicle Number Slot 6 |
-| `[0x11]` | uint8 | `0xF7` | 247 | 40 | Quality Indicator Slot 6 |
-| `[0x12]` | uint8 | `0x12` | 18 |  | Space Vehicle Number Slot 7 |
-| `[0x13]` | uint8 | `0xF7` | 247 | 40 | Quality Indicator Slot 7 |
-| `[0x14]` | uint8 | `0x03` | 3 |  | Space Vehicle Number Slot 8 |
-| `[0x15]` | uint8 | `0xFA` | 250 | 42 | Quality Indicator Slot 8 |
-| `[0x16]` | uint8 | `0x17` | 23 |  | Space Vehicle Number Slot 9 |
-| `[0x17]` | uint8 | `0xFA` | 250 | 42 | Quality Indicator Slot 9 |
-| `[0x18]` | uint8 | `0x1F` | 31 |  | Space Vehicle Number Slot 10 |
-| `[0x19]` | uint8 | `0xF4` | 244 | 40 | Quality Indicator Slot 10 |
-| `[0x1A]` | uint8 | `0x0E` | 14 |  | Space Vehicle Number Slot 11 |
-| `[0x1B]` | uint8 | `0xF4` | 244 | 40 | Quality Indicator Slot 11 |
-| `[0x1C]` | uint8 | `0x0C` | 12 |  | Space Vehicle Number Slot 12 |
-| `[0x1D]` | uint8 | `0x91` | 145 | 5 | Quality Indicator Slot 12 |
+| `[0x06]` | uint8 | `0x01` | PRN 1 |  | Space Vehicle Number Slot 1 |
+| `[0x07]` | uint8 | `0xFB` | mesQI=7<br>cno'=27<br>cno=47 dbHz | 42 | Quality Indicator Slot 1<br>32*mesQI + cno'<br>cno'=0 if cno < 20<br>cno'=cno-20 if 20 <= cno <= 50<br>cno'=31 if cno > 50<br>See u-blox6 RXM-RAW message description for details |
+| `[0x08]` | uint8 | `0x11` | PRN 17 |  | Space Vehicle Number Slot 2 |
+| `[0x09]` | uint8 | `0xF9` | mesQI=7<br>cno=45 dbHz | 41 | Quality Indicator Slot 2 |
+| `[0x0A]` | uint8 | `0x13` | PRN 19 |  | Space Vehicle Number Slot 3 |
+| `[0x0B]` | uint8 | `0xF3` | mesQI=7<br>cno=39 dbHz | 39 | Quality Indicator Slot 3 |
+| `[0x0C]` | uint8 | `0x0B` | PRN 11 |  | Space Vehicle Number Slot 4 |
+| `[0x0D]` | uint8 | `0xFA` | mesQI=7<br>cno=46 dbHz | 42 | Quality Indicator Slot 4 |
+| `[0x0E]` | uint8 | `0x09` | PRN 9 |  | Space Vehicle Number Slot 5 |
+| `[0x0F]` | uint8 | `0x92` | mesQI=4<br>cno=38 dbHz | 6 | Quality Indicator Slot 5 |
+| `[0x10]` | uint8 | `0x16` | PRN 22 |  | Space Vehicle Number Slot 6 |
+| `[0x11]` | uint8 | `0xF7` | mesQI=7<br>cno=43 dbHz | 40 | Quality Indicator Slot 6 |
+| `[0x12]` | uint8 | `0x12` | PRN 18 |  | Space Vehicle Number Slot 7 |
+| `[0x13]` | uint8 | `0xF7` | mesQI=7<br>cno=43 dbHz | 40 | Quality Indicator Slot 7 |
+| `[0x14]` | uint8 | `0x03` | PRN 3 |  | Space Vehicle Number Slot 8 |
+| `[0x15]` | uint8 | `0xFA` | mesQI=7<br>cno=46 dbHz | 42 | Quality Indicator Slot 8 |
+| `[0x16]` | uint8 | `0x17` | PRN 23 |  | Space Vehicle Number Slot 9 |
+| `[0x17]` | uint8 | `0xFA` | mesQI=7<br>cno=46 dbHz | 42 | Quality Indicator Slot 9 |
+| `[0x18]` | uint8 | `0x1F` | PRN 31 |  | Space Vehicle Number Slot 10 |
+| `[0x19]` | uint8 | `0xF4` | mesQI=7<br>cno=40 dbHz | 40 | Quality Indicator Slot 10 |
+| `[0x1A]` | uint8 | `0x0E` | PRN 14 |  | Space Vehicle Number Slot 11 |
+| `[0x1B]` | uint8 | `0xF4` | mesQI=7<br>cno=40 dbHz | 40 | Quality Indicator Slot 11 |
+| `[0x1C]` | uint8 | `0x0C` | PRN 12 |  | Space Vehicle Number Slot 12 |
+| `[0x1D]` | uint8 | `0x91` | mesQI=4<br>cno=37 dbHz | 5 | Quality Indicator Slot 12 |
 
 ## 7D-GPSRAW
 The 7D-GPSRAW block contains the raw doppler shift GPS data to decode the GPS Position in a similar way as with the old RS92. This Data is for the most part not neccesary.
@@ -103,8 +124,8 @@ If there are less than 12 satellites tracked, the other slots are 0x00.
 | address  | datatype | example data | function |
 | --- | --- | --- | --- |
 | `[0x00]` | uint32 | `0x25FC3501` | minPRmes |
-| `[0x04]` |  | `0xFF` | static 0xFF -purpose unknown |
-| `[0x05]` | uint32 | `0x3DFDD302` | PR1: prMes = PR/100+minPRmes |
+| `[0x04]` | uint8 | `0xFF` | Fields from UBX MON-HW message:<br>[7:4] jamInd, [3:0] agcCnt<br>Scaling t.b.d. |
+| `[0x05]` | uint32 | `0x3DFDD302` | PR1: prMes = PR/100-minPRmes |
 | `[0x09]` | uint24 | `0x42BF00` | DP1: doMes = -DP/100\*L1/c (int24) |
 | `[0x0C]` | uint32 | `0xC68F520B` | PR2 |
 | `[0x10]` | uint24 | `0x81FEFF` | DP2 |
@@ -146,6 +167,16 @@ The 7B-GPSPOS block contains the actual position of the sonde in the ECEF format
 
 ## 76-EMPTY
 The 76-EMPTY block just contains a variable amount of zeros to fill up some space.
+
+## 80-CRYPTO
+The 80-CRYPTO block (167 bytes) contains the payload of the `7F-MEASSHORT` (27 bytes), `7B-GPSPOS` (21 bytes), `7C-GPSINFO` (30 bytes) and `7D-GPSRAW` (89 bytes) blocks in encrypted form (Rabbit cipher).
+
+| address  | datatype |
+| --- | --- |
+| `[0x00...0x1A]` | 7F-MEASSHORT payload |
+| `[0x1B...0x38]` | 7C-GPSINFO payload |
+| `[0x39...0x91]` | 7D-GPSRAW payload |
+| `[0x92...0xA6]` | 7B-GPSPOS payload |
 
 ## Subframe
 The subframe consist of 51 \* 16 = 816 Bytes. It is mostly static, but some parts, for example the last 16 bytes, change quite a lot as is discussed in the section about the RS41-SGMs subframe.
@@ -198,11 +229,27 @@ Frequency is calculated by the formula `freq = 400 MHz + (freq upper + (freq low
 | `[0x125]` | float32 | -243.9108 | constants temperature humimeas co2[0] |
 | `[0x129]` | float32 | 0.187654 | constants temperature humimeas co2[1] |
 | `[0x12D]` | float32 | 8.2e-06 | constants temperature humimeas co2[2] |
-| `[0x131]` | float32 | 1.3234462 | calibration temperature humimeas calT2[0] |
-| `[0x135]` | float32 | -0.01772682 | calibration temperature humimeas calT2[1] |
-| `[0x139]` | float32 | 0.0073917112 | calibration temperature humimeas calT2[2] |
+| `[0x131]` | float32 | 1.3234462 | calibration temperature humimeas calT1[0] |
+| `[0x135]` | float32 | -0.01772682 | calibration temperature humimeas calT1[1] |
+| `[0x139]` | float32 | 0.0073917112 | calibration temperature humimeas calT1[2] |
 | `[0x218]` | char[10] | "RS41-SGP  " | sonde type |
 | `[0x222]` | char[10] | "RSM421    " | mainboard type |
 | `[0x22C]` | char[10] | "P2510419 " | mainboard serial |
-| `[0x243]` | char[10] | "P2670962  " | pressure serial |
+| `[0x243]` | char[10] | "P2670962  " | pressure  serial |
 | `[0x316]` | uint16 | 30600 s | burstkill timer |
+
+### Run-time variable fields (0x320...0x32D)
+Fields 0x32E...0x32F are not used by RS41!
+
+| address  | datatype | function |
+| --- | --- | --- |
+| `[0x320]` | int16 | frames remaining untill kill (-1 = 0xFFFF = inactive) |
+| `[0x322]` | int16 | launch altitude [m], referenced to spherical earth model (R=6371.008 km) |
+| `[0x324]` | uint16 | height [m] above launch site where transition to flight mode happened |
+| `[0x326]` | uint8 | ? (power level) |
+| `[0x327]` | uint8 | ? (# software resets) |
+| `[0x328]` | int8 | CPU temperature [°C] |
+| `[0x329]` | int8 | Radio (Si4032) temperature [°C] |
+| `[0x32A]` | uint16 | Remaining battery capacity |
+| `[0x32C]` | uint8 | Number of discarded UBX (GPS) packets |
+| `[0x32D]` | uint8 | Number of occasions when essential UBX (GPS) packets were missing |
